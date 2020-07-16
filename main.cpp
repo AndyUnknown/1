@@ -1,38 +1,35 @@
-﻿
-#define _CRT_SECURE_NO_WARNINGS
+﻿#define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
 #include <iostream>
 #include <cmath>
-#include <time.h>
-
 using namespace std;
-int rom[1 << 20];
+int *rom;
 unsigned int pc = 0;
 unsigned int regs[32];
 bool flag = true;
 //ofstream out;
-
+int tick = 0;
 
 enum INSTRUCTIONS {
-    LUI,
-    AUIPC,
-    JAL,
-    JALR,
-    BEQ,
-    BNE,
-    BLT,
-    BGE,
-    BLTU,
-    BGEU,
-    LB,
-    LH,
-    LW,
-    LBU,
-    LHU,
-    SB,
-    SH,
-    SW,
-    ADDI,
+    LUI,      
+    AUIPC,     
+    JAL,      
+    JALR,     
+    BEQ,      
+    BNE,      
+    BLT,      
+    BGE,      
+    BLTU,     
+    BGEU,     
+    LB,       
+    LH,       
+    LW,       
+    LBU,      
+    LHU,      
+    SB,       
+    SH,       
+    SW,       
+    ADDI,     
     SLTI,
     SLTIU,
     XORI,
@@ -41,7 +38,7 @@ enum INSTRUCTIONS {
     SLLI,
     SRLI,
     SRAI,
-    ADD,      //R
+    ADD,      
     SUB,
     SLL,
     SLT,
@@ -52,9 +49,125 @@ enum INSTRUCTIONS {
     OR,
     AND
 };
-/*
+
 void print_thing(int i)
-*/
+{
+    switch (i)
+    {
+    case 0:
+        cout << "LUI";
+        break;
+    case 1:
+        cout << "AUIPC";
+        break;
+    case 2:
+        cout << "JAL";
+        break;
+    case 3:
+        cout << "JALR";
+        break;
+    case 4:
+        cout << "BEQ";
+        break;
+    case 5:
+        cout << "BNE";
+        break;
+    case 6:
+        cout << "BLT";
+        break;
+    case 7:
+        cout << "BGE";
+        break;
+    case 8:
+        cout << "BLTU";
+        break;
+    case 9:
+        cout << "BGEU";
+        break;
+    case 10:
+        cout << "LB";
+        break;
+    case 11:
+        cout << "LH";
+        break;
+    case 12:
+        cout << "LW";
+        break;
+    case 13:
+        cout << "LBU";
+        break;
+    case 14:
+        cout << "LHU";
+        break;
+    case 15:
+        cout << "SB";
+        break;
+    case 16:
+        cout << "SH";
+        break;
+    case 17:
+        cout << "SW";
+        break;
+    case 18:
+        cout << "ADDI";
+        break;
+    case 19:
+        cout << "SLTI";
+        break;
+    case 20:
+        cout << "SLTIU";
+        break;
+    case 21:
+        cout << "XORI";
+        break;
+    case 22:
+        cout << "ORI";
+        break;
+    case 23:
+        cout << "ANDI";
+        break;
+    case 24:
+        cout << "SLLI";
+        break;
+    case 25:
+        cout << "SRLI";
+        break;
+    case 26:
+        cout << "SRAI";
+        break;
+    case 27:
+        cout << "ADD";
+        break;
+    case 28:
+        cout << "SUB";
+        break;
+    case 29:
+        cout << "SLL";
+        break;
+    case 30:
+        cout << "SLT";
+        break;
+    case 31:
+        cout << "SLTU";
+        break;
+    case 32:
+        cout << "XOR";
+        break;
+    case 33:
+        cout << "SRL";
+        break;
+    case 34:
+        cout << "SRA";
+        break;
+    case 35:
+        cout << "OR";
+        break;
+    case 36:
+        cout << "AND";
+        break;
+    }
+}
+
 
 int X_to_D(char* s, int X_len)
 {
@@ -70,7 +183,7 @@ int X_to_D(char* s, int X_len)
         result += (long long)(tmp[i]) * k;
         k *= 16;
     }
-
+    delete[] tmp;
     return result;
 }
 bool read_in()
@@ -84,7 +197,6 @@ bool read_in()
         char add[8];
         if (ch == '@')
         {
-
             for (int i = 0;i < 8;++i)
             {
                 ch = cin.get();
@@ -121,17 +233,23 @@ bool read_in()
 }
 unsigned int get_inst()
 {
-    
+    char ch[8];
+    ch[1] = rom[pc] / 16 + '0';
+    ch[0] = rom[pc] % 16 + '0';
+    ch[3] = rom[pc + 1] / 16 + '0';
+    ch[2] = rom[pc + 1] % 16 + '0';
+    ch[5] = rom[pc + 2] / 16 + '0';
+    ch[4] = rom[pc + 2] % 16 + '0';
+    ch[7] = rom[pc + 3] / 16 + '0';
+    ch[6] = rom[pc + 3] % 16 + '0';
     unsigned int ans = 0;
-    ans += rom[pc + 3];
-    ans = ans << 8;
-    ans += rom[pc + 2];
-    ans = ans << 8;
-    ans += rom[pc + 1];
-    ans = ans << 8;
-    ans += rom[pc];
-
-
+    for (int i = 0;i < 8;i++) {
+        if (ch[i] < 'A') ch[i] = ch[i] - '0';
+        else ch[i] = ch[i] - 'A' + 10;
+        ans |= ((unsigned int)(ch[i]) << (i << 2));
+    }
+    pc += 4;
+    //    cout << hex << ans << '\t' << dec;
     return ans;
 
 }
@@ -141,7 +259,8 @@ struct instruction
     unsigned int bin;
     INSTRUCTIONS op;
     char type;
-    unsigned int rs1, rs2, rd, imm = 0, adress = 0, rom_content = 0, calc_res;
+    unsigned int rs1=255, rs2=255, rd=255, imm = 0, adress = 0, rom_content = 0, calc_res = 0;
+    bool has_ex = 0,has_id=0;
     instruction(unsigned int num)
     {
         bin = num;
@@ -150,7 +269,6 @@ struct instruction
         unsigned int func7 = (num >> 25) % (1 << 7);
         switch (opcode)
         {
-
         case 0b0110111:
             op = LUI;
             break;
@@ -331,7 +449,7 @@ struct instruction
         else if (op == BEQ || op == BNE || op == BLT || op == BLTU || op == BGE || op == BGEU)type = 'B';
         else if (op == LW || op == LH || op == LHU || op == LB || op == LBU)type = 'I';
         else if (op == SW || op == SH || op == SB)type = 'S';
-        //        cout <<' ' << op << '\t';
+        
     }
     void decode()
     {
@@ -389,14 +507,7 @@ struct instruction
     {
         if (type == 'I')
         {
-            if (op == JALR)
-            {
-                if (rd != 0)
-                    calc_res = pc + 4;
-                pc = (int)((imm + regs[rs1]) >> 1) << 1;
-                pc -= 4;
-            }
-            else if (op == ADDI)
+            if (op == ADDI)
             {
                 calc_res = regs[rs1] + imm;
             }
@@ -442,51 +553,33 @@ struct instruction
             if (op == BEQ)
             {
 
-                if (regs[rs1] == regs[rs2])
-                {
-                    pc += imm;
-                    pc -= 4;
-                }
+                if (regs[rs1] == regs[rs2])calc_res = 1;
+                else calc_res=0;
             }
             else if (op == BNE)
             {
-                if (regs[rs1] != regs[rs2])
-                {
-                    pc += imm;
-                    pc -= 4;
-                }
+                if (regs[rs1] != regs[rs2])calc_res = 1;
+                else calc_res = 0;
             }
             else if (op == BLT)
             {
-                if ((int)regs[rs1] < (int)regs[rs2])
-                {
-                    pc += imm;
-                    pc -= 4;
-                }
+                if ((int)regs[rs1] < (int)regs[rs2])calc_res = 1;
+                else calc_res = 0;
             }
             else if (op == BLTU)
             {
-                if (regs[rs1] < regs[rs2])
-                {
-                    pc += imm;
-                    pc -= 4;
-                }
+                if (regs[rs1] < regs[rs2])calc_res = 1;
+                else calc_res = 0;
             }
             else if (op == BGE)
             {
-                if ((int)regs[rs1] >= (int)regs[rs2])
-                {
-                    pc += imm;
-                    pc -= 4;
-                }
+                if ((int)regs[rs1] >= (int)regs[rs2])calc_res = 1;
+                else calc_res = 0;
             }
             else if (op == BGEU)
             {
-                if (regs[rs1] >= regs[rs2])
-                {
-                    pc += imm;
-                    pc -= 4;
-                }
+                if (regs[rs1] >= regs[rs2])calc_res = 1;
+                else calc_res = 0;
             }
         }
         else if (type == 'R')
@@ -535,18 +628,9 @@ struct instruction
         else if (type == 'S')
         {
             adress = regs[rs1] + (int)imm;
+            calc_res = regs[rs2];
         }
-        else if (type == 'J')
-        {
-            if (op == JAL)
-            {
-                if (rd != 0)
-                    calc_res = pc + 4;
-                pc += (int)imm;
-                pc -= 4;
-            }
-        }
-        pc += 4;
+        
     }
     void memory()
     {
@@ -561,17 +645,18 @@ struct instruction
             else if (op == LH)
             {
                 rom_content += (char)rom[adress + 1];
-                rom_content=rom_content << 8;
+                rom_content = rom_content << 8;
                 rom_content += (char)rom[adress];
+               
             }
             else if (op == LW)
             {
                 rom_content += rom[adress + 3];
-                rom_content=rom_content << 8;
+                rom_content = rom_content << 8;
                 rom_content += rom[adress + 2];
-                rom_content=rom_content << 8;
+                rom_content = rom_content << 8;
                 rom_content += rom[adress + 1];
-                rom_content=rom_content << 8;
+                rom_content = rom_content << 8;
                 rom_content += rom[adress];
             }
             else if (op == LBU)
@@ -581,7 +666,7 @@ struct instruction
             else if (op == LHU)
             {
                 rom_content += rom[adress + 1];
-                rom_content=rom_content << 8;
+                rom_content = rom_content << 8;
                 rom_content += rom[adress];
             }
         }
@@ -589,19 +674,19 @@ struct instruction
         {
             if (op == SB)
             {
-                rom[adress] = (regs[rs2] % (1 << 8));
+                rom[adress] = (calc_res % (1 << 8));
             }
             else if (op == SH)
             {
-                rom[adress] = (regs[rs2] % (1 << 8));
-                rom[adress + 1] = ((regs[rs2] >> 8) % (1 << 8));
+                rom[adress] = (calc_res % (1 << 8));
+                rom[adress + 1] = ((calc_res >> 8) % (1 << 8));
             }
             else if (op == SW)
             {
-                rom[adress] = (regs[rs2] % (1 << 8));
-                rom[adress + 1] = ((regs[rs2] >> 8) % (1 << 8));
-                rom[adress + 2] = ((regs[rs2] >> 16) % (1 << 8));
-                rom[adress + 3] = ((regs[rs2] >> 24) % (1 << 8));
+                rom[adress] = (calc_res % (1 << 8));
+                rom[adress + 1] = ((calc_res >> 8) % (1 << 8));
+                rom[adress + 2] = ((calc_res >> 16) % (1 << 8));
+                rom[adress + 3] = ((calc_res >> 24) % (1 << 8));
             }
         }
     }
@@ -635,38 +720,340 @@ struct instruction
         {
             regs[rd] = calc_res;
         }
-
     }
 };
+
+struct streamline
+{
+    instruction* IF, * ID, * EX, * MEM, * WB, * sleep;
+    bool final_order = 0, has_sleep = 0, jump_hazard = 0;
+    unsigned int mem_tick = 0;
+    int branch_buffer = 0;
+    int correct_prediction=0, total_prediction=0;
+    struct saver
+    {
+        int predict_res;
+        unsigned int pc_alternative;
+    };
+    saver branch;
+    bool branch_prediction()
+    {
+        if (branch_buffer == 0)return 0;
+        else if (branch_buffer == 1)return 0;
+        else if (branch_buffer == 2)return 1;
+        else if (branch_buffer == 3)return 1;
+    }
+    bool need_mem(instruction* EX)
+    {
+        if (EX && (EX->type == 'S' || EX->op == LW || EX->op == LB || EX->op == LH || EX->op == LBU || EX->op == LHU))
+            return 1;
+        else
+            return 0;
+    }
+    void get_branch()
+    {
+        branch.predict_res = branch_prediction();
+        if (branch.predict_res)
+            branch.pc_alternative = pc;
+        else
+            branch.pc_alternative = pc + ID->imm - 4;
+        if (branch.predict_res)
+            pc += ID->imm - 4;
+        
+    }
+    void test_branch()
+    {
+        if (EX && EX->type == 'B' && EX->calc_res != branch.predict_res)
+        {
+            total_prediction += 1;
+            if (branch_buffer == 0)branch_buffer = 1;
+            else if (branch_buffer == 1)branch_buffer = 2;
+            else if (branch_buffer == 2)branch_buffer = 1;
+            else if (branch_buffer == 3)branch_buffer = 2;
+            delete IF;
+            delete ID;
+            IF = NULL;
+            ID = NULL;
+            pc = branch.pc_alternative;
+        }
+        else if (EX && EX->type == 'B' && EX->calc_res == branch.predict_res)
+        {
+            total_prediction += 1;
+            correct_prediction += 1;
+            if (branch_buffer == 0)branch_buffer = 0;
+            else if (branch_buffer == 1)branch_buffer = 0;
+            else if (branch_buffer == 2)branch_buffer = 3;
+            else if (branch_buffer == 3)branch_buffer = 3;
+        }
+
+    }
+    void instruction_fetch()
+    {
+        if (!final_order&&!IF)
+        {
+            int num = get_inst();
+            /*
+            if (num == 0x0ff00513)
+            {
+                final_order = 1;
+                IF = NULL;
+            }
+            else
+                IF = new instruction(num);
+            */
+            IF = new instruction(num);
+        }
+    }
+    void instruction_decode()
+    {
+        if (ID&&ID->has_id == 1&&!jump_hazard)
+            return;
+        if (ID)
+            ID->has_id = 1;
+        if (ID)ID->decode();
+        if (ID && ID->op == JALR &&(( !EX || EX->rd != ID->rs1) && (!MEM || MEM->rd != ID->rs1)))
+        {
+            jump_hazard = 0;
+            ID->calc_res = pc;
+            pc = (int)((ID->imm + regs[ID->rs1]) >> 1) << 1;
+        }
+        if (ID && ID->op == JALR && !((!EX || EX->rd != ID->rs1) && (!MEM || MEM->rd != ID->rs1)))
+        {
+            jump_hazard = 1;
+        }
+        else if (ID && ID->op == JAL)
+        {
+            ID->calc_res = pc;
+            pc += (int)(ID->imm);
+            pc -= 4;
+        }
+        else if (ID && ID->type == 'B')
+        {
+            get_branch();
+        }
+    }
+    void execute()
+    {
+        if (EX&&EX->has_ex == 1)
+            return;
+        if (EX)
+            EX->has_ex = 1;
+        if (EX)EX->execute();
+        test_branch();
+    }
+    void hazard_deal()
+    {
+        has_sleep = 1;
+        sleep = EX;
+        EX = NULL;
+    }
+    void end_suspension()
+    {
+        EX = sleep;
+        sleep = NULL;
+    }
+    void carry_out()//WB->hazard_deal->MEM->suspend/end_suspend->EX->ID->IF
+    {
+        //WB&MEM
+        
+        if (tick == 352)
+            int i=0;
+        if (WB)
+        {
+            if (WB->bin == 0x0ff00513)
+            {
+                final_order = 1;
+                IF = NULL;
+                ID = NULL;
+                EX = NULL;
+                MEM = NULL;
+                WB = NULL;
+                return;
+            }
+            WB->write_back();
+            //cout << tick << '\t' << WB->bin << endl;
+            tick += 1;
+        }
+        if ((EX&&MEM)&&((EX->rs1 == MEM->rd && MEM->rd !=255) || (EX->rs2 == MEM->rd && MEM->rd != 255) || (EX->rd == MEM->rd && MEM->rd != 255)))//hazard
+        {
+            hazard_deal();
+        }
+        if (MEM)
+        {
+            if(mem_tick == 0)
+                MEM->memory();
+            mem_tick += 1;
+            if (mem_tick <= 0)
+                return;
+            else
+                mem_tick = 0;
+        }
+        if (has_sleep)
+            return;
+        
+
+        //EX
+        execute();
+
+        
+        //ID
+        instruction_decode();
+        if (jump_hazard)
+            return;
+
+        //IF
+        instruction_fetch();
+        
+    }
+    void next_round()
+    {
+        //have_sleep=1表示应该等待mem操作完成再继续流水
+
+        if (WB)
+        {
+            delete WB;
+            WB = NULL;
+        }
+        if(has_sleep)
+        {
+            int i = 0;
+        }
+                                         
+        if (jump_hazard && mem_tick == 0)
+        {
+            WB = MEM;
+            MEM = NULL;
+            if (!has_sleep)
+            {
+                MEM = EX;
+                EX = NULL;
+            }
+            has_sleep = 0;
+        }
+
+        if (!jump_hazard && mem_tick == 0)
+        {
+            WB = MEM;
+            MEM = NULL;
+            if (!has_sleep)
+            {
+                MEM = EX;
+                EX = ID;
+                ID = IF;
+                IF = NULL;
+            }
+            has_sleep = 0;
+        }
+        
+
+        /*
+        if (MEM)//有MEM
+        {
+            
+            if (EX && need_mem(EX))//EX要用mem
+            {
+                if (mem_tick == 0)//MEM做完了
+                {
+                    WB = MEM;
+                    MEM = EX;
+                    EX = ID;
+                    ID = IF;
+                    IF = NULL;
+                
+                    has_sleep = 0;
+                }
+                //MEM没做完继续做
+            }
+            else if (has_sleep)//EX在睡眠
+            {
+                if (mem_tick == 0)//MEM做完了
+                {
+                    WB = MEM;
+                    MEM = NULL;
+                    has_sleep = 0;//起床
+                }
+                //MEM没做完继续做
+            }
+            else if (!need_mem(EX))//EX不要用mem
+            {
+                if (mem_tick == 0)//MEM做完了
+                {
+                    WB = MEM;
+                    MEM = NULL;
+                }
+                else//MEM没做完
+                {
+                    WB = EX;
+                    EX = ID;
+                    ID = IF;
+                    IF = NULL;
+                }
+            }  
+        }
+        else//没有MEM操作，显然没人睡觉
+        {
+            if (EX && need_mem(EX))//EX要用mem
+            {
+                MEM = EX;
+                EX = ID;
+                ID = IF;
+                IF = NULL;
+            }
+            else if (!need_mem(EX))//EX不要用mem或者没用EX
+            {
+                WB = EX;
+                EX = ID;
+                ID = IF;
+                IF = NULL;
+            }
+        }*/
+
+
+        if (!has_sleep && sleep)
+        {
+            end_suspension();
+        }
+
+    }
+    bool has_end()
+    {
+        return ( WB == NULL && MEM == NULL && EX == NULL && WB == NULL && final_order);
+    }
+    streamline()
+    {
+        IF= NULL;
+        ID = NULL;
+        EX = NULL;
+        MEM = NULL;
+        WB = NULL;
+        sleep = NULL;
+    }
+};
+
 int main()
 {
-//    freopen(".\\heart 127.data", "r", stdin);
+    //freopen(".\\heart 127.data", "r", stdin);
     char operation[32];
+    rom = new int[1 << 20];
     for (int i = 0;i < (1 << 20);++i)
         rom[i] = 0;
 
     //    out.open("res.txt");
     read_in();
+
     
-    while (1)
+    streamline st;
+
+    
+    while (!st.has_end())
     {
-        
-        unsigned int operation = get_inst();
-        
-        if (operation == 0x0ff00513)
-        {
-            cout << (((unsigned int)regs[10]) & 255u);
-            break;
-        }
-        else
-        {
-            instruction inst(operation);
-            inst.decode();
-            inst.execute();
-            if(inst.type=='I'||inst.type=='S')
-                inst.memory();
-            inst.write_back();
-        }
+        st.carry_out();
+        st.next_round();
     }
+    cout << (((unsigned int)regs[10]) & 255u) << endl;
+    //cout << st.correct_prediction << '/' << st.total_prediction;
+    delete[] rom;
+   
+
 
 }
