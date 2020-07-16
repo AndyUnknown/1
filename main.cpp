@@ -4,7 +4,7 @@
 #include <cmath>
 #include <time.h>
 using namespace std;
-int rom[1 << 20];
+int rom[1 << 18];
 unsigned int pc = 0;
 unsigned int regs[32];
 bool flag = true;
@@ -639,7 +639,7 @@ struct instruction
 int main()
 {
     char operation[32];
-    for (int i = 0;i < (1 << 20);++i)
+    for (int i = 0;i < (1 << 18);++i)
         rom[i] = 0;
 
     //    out.open("res.txt");
