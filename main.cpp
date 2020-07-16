@@ -1,8 +1,10 @@
 ﻿
+#define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
 #include <iostream>
 #include <cmath>
 #include <time.h>
+
 using namespace std;
 int rom[1 << 20];
 unsigned int pc = 0;
@@ -82,6 +84,7 @@ bool read_in()
         char add[8];
         if (ch == '@')
         {
+
             for (int i = 0;i < 8;++i)
             {
                 ch = cin.get();
@@ -330,7 +333,6 @@ struct instruction
         else if (op == SW || op == SH || op == SB)type = 'S';
         //        cout <<' ' << op << '\t';
     }
-
     void decode()
     {
         if (type == 'U')
@@ -638,6 +640,7 @@ struct instruction
 };
 int main()
 {
+//    freopen(".\\heart 127.data", "r", stdin);
     char operation[32];
     for (int i = 0;i < (1 << 20);++i)
         rom[i] = 0;
@@ -661,7 +664,7 @@ int main()
             inst.decode();
             inst.execute();
             if(inst.type=='I'||inst.type=='S')
-                    inst.memory();
+                inst.memory();
             inst.write_back();
         }
     }
