@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <cmath>
+#include <map>
 using namespace std;
 int *rom;
 unsigned int pc = 0;
@@ -315,10 +316,11 @@ struct instruction
     unsigned int bin;
     INSTRUCTIONS op;
     char type;
-    unsigned int rs1=255, rs2=255, rd=255, imm = 0, adress = 0, rom_content = 0, calc_res = 0;
+    unsigned int rs1 = 255, rs2 = 255, rd = 255, imm = 0, adress = 0, rom_content = 0, calc_res = 0, start_pc = 0;
     bool has_ex = 0,has_id=0;
     instruction(unsigned int num)
     {
+        start_pc = pc - 4;
         bin = num;
         unsigned int func3 = (num >> 12) % 8;
         unsigned int opcode = num % (1 << 7);
@@ -781,10 +783,10 @@ struct instruction
 
 struct streamline
 {
+    map<int, int> BTB;
     instruction* IF, * ID, * EX, * MEM, * WB, * sleep;
     bool final_order = 0, has_sleep = 0, jump_hazard = 0;
     unsigned int mem_tick = 0;
-    int branch_buffer = 0;
     int correct_prediction=0, total_prediction=0;
     struct saver
     {
@@ -794,6 +796,14 @@ struct streamline
     saver branch;
     bool branch_prediction()
     {
+        int branch_buffer;
+        if (BTB.find(ID->start_pc) == BTB.end())
+        {
+            BTB[ID->start_pc] = 0;
+            branch_buffer = 0;
+        }
+        else branch_buffer = BTB[ID->start_pc];
+
         if (branch_buffer == 0)return 0;
         else if (branch_buffer == 1)return 0;
         else if (branch_buffer == 2)return 1;
@@ -822,10 +832,10 @@ struct streamline
         if (EX && EX->type == 'B' && EX->calc_res != branch.predict_res)
         {
             total_prediction += 1;
-            if (branch_buffer == 0)branch_buffer = 1;
-            else if (branch_buffer == 1)branch_buffer = 2;
-            else if (branch_buffer == 2)branch_buffer = 1;
-            else if (branch_buffer == 3)branch_buffer = 2;
+            if (BTB[EX->start_pc] == 0)BTB[EX->start_pc] = 1;
+            else if (BTB[EX->start_pc] == 1)BTB[EX->start_pc] = 2;
+            else if (BTB[EX->start_pc] == 2)BTB[EX->start_pc] = 1;
+            else if (BTB[EX->start_pc] == 3)BTB[EX->start_pc] = 2;
             delete IF;
             delete ID;
             IF = NULL;
@@ -836,10 +846,10 @@ struct streamline
         {
             total_prediction += 1;
             correct_prediction += 1;
-            if (branch_buffer == 0)branch_buffer = 0;
-            else if (branch_buffer == 1)branch_buffer = 0;
-            else if (branch_buffer == 2)branch_buffer = 3;
-            else if (branch_buffer == 3)branch_buffer = 3;
+            if (BTB[EX->start_pc] == 0)BTB[EX->start_pc] = 0;
+            else if (BTB[EX->start_pc] == 1)BTB[EX->start_pc] = 0;
+            else if (BTB[EX->start_pc] == 2)BTB[EX->start_pc] = 3;
+            else if (BTB[EX->start_pc] == 3)BTB[EX->start_pc] = 3;
         }
 
     }
@@ -911,9 +921,7 @@ struct streamline
     void carry_out()//WB->hazard_deal->MEM->suspend/end_suspend->EX->ID->IF
     {
         //WB&MEM
-        
-        if (tick == 352)
-            int i=0;
+     
         if (WB)
         {
             if (WB->bin == 0x0ff00513)
@@ -939,7 +947,7 @@ struct streamline
             if(mem_tick == 0)
                 MEM->memory();
             mem_tick += 1;
-            if (mem_tick <= 0)
+            if (mem_tick <= 1)
                 return;
             else
                 mem_tick = 0;
@@ -986,7 +994,7 @@ struct streamline
             }
             has_sleep = 0;
         }
-        /*
+        
         if (!jump_hazard && mem_tick == 0)
         {
             WB = MEM;
@@ -1001,11 +1009,10 @@ struct streamline
             has_sleep = 0;
         }
         
-        */
         
+        /*
         else if (MEM)//有MEM
         {
-            
             if (EX && need_mem(EX))//EX要用mem
             {
                 if (mem_tick == 0)//MEM做完了
@@ -1055,7 +1062,7 @@ struct streamline
                 ID = IF;
                 IF = NULL;
             }
-            else if (!need_mem(EX))//EX不要用mem或者没用EX
+            else if (!need_mem(EX))//EX不要用mem
             {
                 WB = EX;
                 EX = ID;
@@ -1063,7 +1070,7 @@ struct streamline
                 IF = NULL;
             }
         }
-
+        */
 
         if (!has_sleep && sleep)
         {
@@ -1088,7 +1095,7 @@ struct streamline
 
 int main()
 {
-    //freopen(".\\heart 127.data", "r", stdin);
+    freopen(".\\basicopt1 88.data", "r", stdin);
     char operation[32];
     rom = new int[1 << 20];
     for (int i = 0;i < (1 << 20);++i)
@@ -1108,7 +1115,7 @@ int main()
         st.next_round();
     }
     cout << (((unsigned int)regs[10]) & 255u) << endl;
-    //cout << st.correct_prediction << '/' << st.total_prediction;
+//    cout << st.correct_prediction << '/' << st.total_prediction;
     delete[] rom;
    
 
