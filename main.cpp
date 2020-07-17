@@ -192,7 +192,7 @@ bool read_in()
     static char ch = cin.get();
     if (ch == EOF)
         return false;
-    while (ch != EOF)
+    while (ch != EOF && ch!='\x1a')
     {
         char add[8];
         if (ch == '@')
