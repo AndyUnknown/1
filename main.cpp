@@ -1095,7 +1095,7 @@ struct streamline
 
 int main()
 {
-    freopen(".\\basicopt1 88.data", "r", stdin);
+    //freopen(".\\basicopt1 88.data", "r", stdin);
     char operation[32];
     rom = new int[1 << 20];
     for (int i = 0;i < (1 << 20);++i)
