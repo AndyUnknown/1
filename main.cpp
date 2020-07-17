@@ -10,6 +10,46 @@ bool flag = true;
 //ofstream out;
 int tick = 0;
 
+struct m1 {};
+struct m2 {
+    int num;
+    m2(int n = 0) :num(n) {}
+};
+inline bool is_num(char c) {
+    if (c >= '0' && c <= '9') return true;
+    if (c >= 'A' && c <= 'F') return true;
+    if (c == '@') throw m1();
+    if (c == EOF) throw m2();
+    return false;
+}
+inline void read(unsigned int& num) {
+    char ch = getchar();unsigned int x = 0;
+    while (!is_num(ch)) { ch = getchar(); }
+    while (is_num(ch)) {
+        ch = (ch < 'A') ? (ch - '0') : (ch - 'A' + 10);
+        x = (x << 4) + ch;ch = getchar();
+    }
+    num = x;
+}
+inline unsigned int read() {//把32位码转换成int
+    char ch[2];
+    ch[1] = getchar();
+    while (!is_num(ch[1])) { ch[1] = getchar(); }
+    ch[0] = getchar();getchar();
+
+    // printf("read ->");for(int i=7;i>=0;--i) putchar(ch[i]);puts("");
+
+    unsigned int ans = 0;
+    for (int i = 0;i < 2;i++) {
+        if (ch[i] < 'A') ch[i] = ch[i] - '0';
+        else ch[i] = ch[i] - 'A' + 10;
+        ans |= ((unsigned int)(ch[i]) << (i << 2));
+        // printf("ans |= %d << %d\n",ch[i],4*i);
+    }
+    // printf("return %d\n",ans);
+    return ans;
+}
+
 enum INSTRUCTIONS {
     LUI,      
     AUIPC,     
@@ -167,8 +207,6 @@ void print_thing(int i)
         break;
     }
 }
-
-
 int X_to_D(char* s, int X_len)
 {
     char* tmp;
@@ -188,7 +226,6 @@ int X_to_D(char* s, int X_len)
 }
 bool read_in()
 {
-
     static char ch = cin.get();
     if (ch == EOF)
         return false;
@@ -1039,7 +1076,22 @@ int main()
         rom[i] = 0;
 
     //    out.open("res.txt");
-    read_in();
+    //read_in();
+
+flag1:
+    try {
+        while (true) {
+            rom[pc] = read();
+            pc += 1;
+        }
+    }
+    catch (m1 e) {
+        read(pc);
+        goto flag1;
+    }
+    catch (m2 e) {
+        pc = 0;
+    }
 
     
     streamline st;
