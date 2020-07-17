@@ -15,7 +15,7 @@ struct m2 {
     int num;
     m2(int n = 0) :num(n) {}
 };
-inline bool is_num(char c) {
+bool is_num(char c) {
     if (c >= '0' && c <= '9') return true;
     if (c >= 'A' && c <= 'F') return true;
     if (c == '@') throw m1();
@@ -224,6 +224,7 @@ int X_to_D(char* s, int X_len)
     delete[] tmp;
     return result;
 }
+/*
 bool read_in()
 {
     static char ch = cin.get();
@@ -267,6 +268,24 @@ bool read_in()
     if (ch == EOF)
         return false;
     return true;
+}
+*/
+
+void read_in()
+{
+    try {
+        while (true) {
+            rom[pc] = read();
+            pc += 1;
+        }
+    }
+    catch (m1 e) {
+        read(pc);
+        read_in();
+    }
+    catch (m2 e) {
+        pc = 0;
+    }
 }
 unsigned int get_inst()
 {
@@ -967,7 +986,7 @@ struct streamline
             }
             has_sleep = 0;
         }
-
+        /*
         if (!jump_hazard && mem_tick == 0)
         {
             WB = MEM;
@@ -982,9 +1001,9 @@ struct streamline
             has_sleep = 0;
         }
         
-
-        /*
-        if (MEM)//有MEM
+        */
+        
+        else if (MEM)//有MEM
         {
             
             if (EX && need_mem(EX))//EX要用mem
@@ -1043,7 +1062,7 @@ struct streamline
                 ID = IF;
                 IF = NULL;
             }
-        }*/
+        }
 
 
         if (!has_sleep && sleep)
@@ -1076,22 +1095,8 @@ int main()
         rom[i] = 0;
 
     //    out.open("res.txt");
-    //read_in();
+    read_in();
 
-flag1:
-    try {
-        while (true) {
-            rom[pc] = read();
-            pc += 1;
-        }
-    }
-    catch (m1 e) {
-        read(pc);
-        goto flag1;
-    }
-    catch (m2 e) {
-        pc = 0;
-    }
 
     
     streamline st;
