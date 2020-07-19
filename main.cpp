@@ -900,7 +900,7 @@ struct streamline
         if (!final_order&&!IF)
         {
             int num = get_inst();
-            
+            /*
             if (num == 0x0ff00513)
             {
                 final_order = 1;
@@ -908,9 +908,8 @@ struct streamline
             }
             else
                 IF = new instruction(num);
-            
-            /*
-            IF = new instruction(num);*/
+            */
+            IF = new instruction(num);
         }
     }
     void instruction_decode()
@@ -988,8 +987,11 @@ struct streamline
             if(mem_tick == 0)
                 MEM->memory();
             mem_tick += 1;
+
             if (mem_tick > 2)
                 mem_tick = 0;
+            else
+                return;
         }
         if (data_sleep)
             return;
